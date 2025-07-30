@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เกมคำซ้อนสายฟ้าแลบ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Kanit', sans-serif; }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        @keyframes explode {
+            0% { transform: scale(1) rotate(0deg); opacity: 1; }
+            50% { transform: scale(1.2) rotate(180deg); opacity: 0.8; }
+            100% { transform: scale(2) rotate(360deg); opacity: 0; }
+        }
+        
+        @keyframes sparkle {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+        
+        .bounce { animation: bounce 2s infinite; }
+        .pulse { animation: pulse 1s infinite; }
+        .shake { animation: shake 0.5s infinite; }
+        .explode { animation: explode 0.5s ease-out; }
+        .sparkle { animation: sparkle 1.5s infinite; }
+        
+        .timer-danger { color: #ef4444; animation: shake 0.5s infinite; }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        
+        .neon-glow {
+            box-shadow: 0 0 20px rgba(147, 51, 234, 0.5);
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+    <!-- หน้าแรก -->
+    <div id="homeScreen" class="min-h-screen flex flex-col items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-2xl w-full text-center">
+            <div class="bounce mb-6">
+                <div class="text-6xl mb-4 sparkle">⚡💥⚡</div>
+                <h1 class="text-4xl font-bold text-purple-800 mb-2">เกมคำซ้อนสายฟ้าแลบ</h1>
+                <p class="text-lg text-gray-600">เลือกคำซ้อนให้ถูกก่อนระเบิดจะระเบิด!</p>
+            </div>
+            
+            <div class="bg-yellow-50 rounded-xl p-6 mb-6">
+                <h3 class="text-xl font-semibold text-orange-800 mb-3">🎯 กติกาการเล่น</h3>
+                <ul class="text-left text-gray-700 space-y-2">
+                    <li>• เลือกคำที่เป็น "คำซ้อน" จากตัวเลือกที่กำหนด</li>
+                    <li>• มีเวลา 7 วินาทีในแต่ละข้อ</li>
+                    <li>• ตอบถูก +100 คะแนน เป้าหมาย 1000 คะแนน</li>
+                    <li>• หากเวลาหมดหรือตอบผิด เกมจะจบ</li>
+                    <li>• ระเบิดจะระเบิดเมื่อหมดเวลา!</li>
+                </ul>
+            </div>
+            
+            <button onclick="startGame()" class="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-full text-xl font-semibold hover:from-purple-700 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 pulse neon-glow">
+                🚀 เริ่มเล่นเลย!
+            </button>
+            
+            <div class="mt-8 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border-2 border-blue-200">
+                <h4 class="font-bold text-blue-800 mb-3 text-lg">👨‍💻 ทีมพัฒนา - Gifted Computer ม.5/5</h4>
+                <div class="text-sm text-blue-700 space-y-2">
+                    <div class="bg-white rounded-lg p-3 shadow-sm">
+                        <p class="font-semibold">1. นาย ปฏิพล พิชัย</p>
+                        <p class="text-xs text-gray-600">เลขที่ 18 ชั้น ม.5/5</p>
+                    </div>
+                    <div class="bg-white rounded-lg p-3 shadow-sm">
+                        <p class="font-semibold">2. นาย ศุภฤกษ์ แสนหลี</p>
+                        <p class="text-xs text-gray-600">เลขที่ 21 ชั้น ม.5/5</p>
+                    </div>
+                    <div class="bg-white rounded-lg p-3 shadow-sm">
+                        <p class="font-semibold">3. นาย ศุภวิชญ์ ต้อตานา</p>
+                        <p class="text-xs text-gray-600">เลขที่ 36 ชั้น ม.5/5</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- หน้าเกม -->
+    <div id="gameScreen" class="hidden min-h-screen flex flex-col items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-4xl w-full">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-6">
+                <div class="text-2xl font-bold text-purple-800">
+                    คะแนน: <span id="score" class="text-green-600">0</span>/1000
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-lg text-gray-600">เวลา:</div>
+                    <div id="timer" class="text-4xl font-bold text-blue-600">7</div>
+                    <div id="bomb" class="text-5xl">💣</div>
+                </div>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="w-full bg-gray-200 rounded-full h-4 mb-6 shadow-inner">
+                <div id="progressBar" class="bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 h-4 rounded-full transition-all duration-500 shadow-sm" style="width: 0%"></div>
+            </div>
+            
+            <!-- คำถาม -->
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-semibold text-gray-800 mb-2">🎯 เลือกคำที่เป็น "คำซ้อน"</h2>
+                <p class="text-gray-600 mb-6">คำซ้อน คือ คำที่เกิดจากการนำคำ 2 คำมาซ้อนกัน โดยคำหลังขยายคำหน้า</p>
+                <div id="questionContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto">
+                    <!-- ตัวเลือกจะถูกสร้างด้วย JavaScript -->
+                </div>
+            </div>
+            
+            <!-- ข้อมูลเพิ่มเติม -->
+            <div id="feedbackContainer" class="hidden mt-6 p-4 rounded-xl text-center">
+                <p id="feedbackText" class="text-lg font-semibold"></p>
+                <p id="explanationText" class="text-sm text-gray-600 mt-2"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- หน้าผลลัพธ์ -->
+    <div id="resultScreen" class="hidden min-h-screen flex flex-col items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-2xl w-full text-center">
+            <div id="resultIcon" class="text-8xl mb-4 sparkle">🎉</div>
+            <h2 id="resultTitle" class="text-4xl font-bold mb-4">ยินดีด้วย!</h2>
+            <p id="resultMessage" class="text-xl text-gray-600 mb-6">คุณทำคะแนนได้ 1000 แต้ม!</p>
+            
+            <div class="bg-gray-50 rounded-xl p-4 mb-6">
+                <h3 class="font-semibold text-gray-800 mb-2">📊 สถิติการเล่น</h3>
+                <p id="finalScore" class="text-2xl font-bold text-purple-600">คะแนนรวม: 0 แต้ม</p>
+                <p id="accuracy" class="text-gray-600">ความแม่นยำ: 0%</p>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button onclick="restartGame()" class="bg-gradient-to-r from-green-500 to-blue-500 text-white px-6 py-3 rounded-full font-semibold hover:from-green-600 hover:to-blue-600 transform hover:scale-105 transition-all duration-200 pulse">
+                    🔄 เล่นอีกครั้ง
+                </button>
+                <button onclick="showTutorial()" class="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-full font-semibold hover:from-orange-600 hover:to-red-600 transform hover:scale-105 transition-all duration-200">
+                    📚 เรียนรู้เพิ่มเติม
+                </button>
+                <button onclick="goHome()" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-full font-semibold hover:from-purple-600 hover:to-pink-600 transform hover:scale-105 transition-all duration-200">
+                    🏠 หน้าแรก
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- หน้าสอน -->
+    <div id="tutorialScreen" class="hidden min-h-screen flex flex-col items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-5xl w-full">
+            <h2 class="text-3xl font-bold text-center text-purple-800 mb-6">📚 เรียนรู้เกี่ยวกับคำซ้อนและประเภทคำอื่นๆ</h2>
+            
+            <div class="grid md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-green-50 rounded-xl p-6 border-2 border-green-200">
+                    <h3 class="text-xl font-semibold text-green-800 mb-3">✅ คำซ้อน</h3>
+                    <p class="text-gray-700 mb-3">คำที่เกิดจากการนำคำ 2 คำมาซ้อนกัน โดยคำหลังขยายคำหน้า</p>
+                    <div class="space-y-2 text-sm">
+                        <p><strong>ลักษณะสำคัญ:</strong></p>
+                        <p>• คำหลังขยายความหมายของคำหน้า</p>
+                        <p>• สามารถแยกออกเป็น 2 คำได้</p>
+                        <p>• มีความหมายที่ชัดเจน</p>
+                        <div class="mt-3">
+                            <p><strong>ตัวอย่าง:</strong></p>
+                            <div class="grid grid-cols-2 gap-2 mt-2">
+                                <p>• น้ำแข็ง (น้ำ + แข็ง)</p>
+                                <p>• ดินสอ (ดิน + สอ)</p>
+                                <p>• เสื้อผ้า (เสื้อ + ผ้า)</p>
+                                <p>• รถไฟ (รถ + ไฟ)</p>
+                                <p>• หนังสือ (หนัง + สือ)</p>
+                                <p>• ใบไม้ (ใบ + ไม้)</p>
+                                <p>• ลูกไม้ (ลูก + ไม้)</p>
+                                <p>• ข้าวโพด (ข้าว + โพด)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-red-50 rounded-xl p-6 border-2 border-red-200">
+                    <h3 class="text-xl font-semibold text-red-800 mb-3">❌ ไม่ใช่คำซ้อน</h3>
+                    <div class="space-y-4 text-sm text-gray-700">
+                        <div class="bg-white rounded-lg p-3">
+                            <p><strong>🔸 คำสมาส:</strong> การนำคำมาประกอบกัน</p>
+                            <p class="text-xs mt-1">เช่น: ครูใหญ่, นักเรียน, ผู้ใหญ่</p>
+                        </div>
+                        <div class="bg-white rounded-lg p-3">
+                            <p><strong>🔸 คำประสม:</strong> คำที่มีหลายพยางค์</p>
+                            <p class="text-xs mt-1">เช่น: โรงเรียน, โรงพยาบาล, โรงแรม</p>
+                        </div>
+                        <div class="bg-white rounded-lg p-3">
+                            <p><strong>🔸 คำมูล:</strong> คำพื้นฐานที่ไม่ได้มาจากการผสม</p>
+                            <p class="text-xs mt-1">เช่น: คน, บ้าน, ข้าว, น้ำ</p>
+                        </div>
+                        <div class="bg-white rounded-lg p-3">
+                            <p><strong>🔸 คำสมาสสนธิ:</strong> คำที่เกิดจากการเชื่อมต่อ</p>
+                            <p class="text-xs mt-1">เช่น: พระราชา, มหาวิทยาลัย, มหาชน</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-blue-50 rounded-xl p-6 mb-6">
+                <h3 class="text-xl font-semibold text-blue-800 mb-3">💡 เทคนิคการจำแนก</h3>
+                <div class="grid md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <p><strong>วิธีสังเกตคำซ้อน:</strong></p>
+                        <ul class="list-disc list-inside space-y-1 mt-2">
+                            <li>แยกเป็น 2 คำได้</li>
+                            <li>คำหลังขยายคำหน้า</li>
+                            <li>ความหมายชัดเจน</li>
+                            <li>ใช้ในชีวิตประจำวัน</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <p><strong>ข้อควรระวัง:</strong></p>
+                        <ul class="list-disc list-inside space-y-1 mt-2">
+                            <li>อย่าสับสนกับคำสมาส</li>
+                            <li>ดูความสัมพันธ์ของคำ</li>
+                            <li>พิจารณาความหมาย</li>
+                            <li>ฝึกฝนให้มาก</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <button onclick="goHome()" class="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-3 rounded-full font-semibold hover:from-purple-700 hover:to-pink-700 transform hover:scale-105 transition-all duration-200">
+                    🏠 กลับหน้าแรก
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentScore = 0;
+        let currentQuestion = 0;
+        let timeLeft = 7;
+        let gameTimer;
+        let questions = [];
+        let totalQuestions = 0;
+        let correctAnswers = 0;
+        
+        // ข้อมูลคำถาม
+        const questionBank = [
+            {
+                options: ["น้ำแข็ง", "โรงเรียน", "ครูใหญ่", "มหาวิทยาลัย"],
+                correct: "น้ำแข็ง",
+                explanation: "น้ำแข็ง = น้ำ + แข็ง (คำหลังขยายคำหน้า)"
+            },
+            {
+                options: ["ดินสอ", "นักเรียน", "โรงพยาบาล", "พระราชา"],
+                correct: "ดินสอ",
+                explanation: "ดินสอ = ดิน + สอ (คำซ้อนแท้)"
+            },
+            {
+                options: ["เสื้อผ้า", "ครูใหญ่", "โรงแรม", "มหาชน"],
+                correct: "เสื้อผ้า",
+                explanation: "เสื้อผ้า = เสื้อ + ผ้า (คำซ้อน)"
+            },
+            {
+                options: ["รถไฟ", "โรงเรียน", "นักเรียน", "พระราชา"],
+                correct: "รถไฟ",
+                explanation: "รถไฟ = รถ + ไฟ (คำซ้อน)"
+            },
+            {
+                options: ["หนังสือ", "มหาวิทยาลัย", "ครูใหญ่", "โรงพยาบาล"],
+                correct: "หนังสือ",
+                explanation: "หนังสือ = หนัง + สือ (คำซ้อน)"
+            },
+            {
+                options: ["ใบไม้", "โรงแรม", "นักเรียน", "มหาชน"],
+                correct: "ใบไม้",
+                explanation: "ใบไม้ = ใบ + ไม้ (คำซ้อน)"
+            },
+            {
+                options: ["ดาวดวง", "พระราชา", "โรงเรียน", "ครูใหญ่"],
+                correct: "ดาวดวง",
+                explanation: "ดาวดวง = ดาว + ดวง (คำซ้อน)"
+            },
+            {
+                options: ["ลูกไม้", "มหาวิทยาลัย", "โรงพยาบาล", "นักเรียน"],
+                correct: "ลูกไม้",
+                explanation: "ลูกไม้ = ลูก + ไม้ (คำซ้อน)"
+            },
+            {
+                options: ["ข้าวโพด", "โรงแรม", "ครูใหญ่", "พระราชา"],
+                correct: "ข้าวโพด",
+                explanation: "ข้าวโพด = ข้าว + โพด (คำซ้อน)"
+            },
+            {
+                options: ["ไก่ป่า", "มหาชน", "โรงเรียน", "นักเรียน"],
+                correct: "ไก่ป่า",
+                explanation: "ไก่ป่า = ไก่ + ป่า (คำซ้อน)"
+            },
+            {
+                options: ["ปลาทอง", "โรงพยาบาล", "ผู้ใหญ่", "มหาวิทยาลัย"],
+                correct: "ปลาทอง",
+                explanation: "ปลาทอง = ปลา + ทอง (คำซ้อน)"
+            },
+            {
+                options: ["ไข่ดาว", "ครูใหญ่", "โรงแรม", "พระราชา"],
+                correct: "ไข่ดาว",
+                explanation: "ไข่ดาว = ไข่ + ดาว (คำซ้อน)"
+            },
+            {
+                options: ["ลิงลม", "นักเรียน", "มหาชน", "โรงเรียน"],
+                correct: "ลิงลม",
+                explanation: "ลิงลม = ลิง + ลม (คำซ้อน)"
+            },
+            {
+                options: ["หมูป่า", "โรงพยาบาล", "ครูใหญ่", "มหาวิทยาลัย"],
+                correct: "หมูป่า",
+                explanation: "หมูป่า = หมู + ป่า (คำซ้อน)"
+            },
+            {
+                options: ["ไผ่ป่า", "พระราชา", "โรงแรม", "ผู้ใหญ่"],
+                correct: "ไผ่ป่า",
+                explanation: "ไผ่ป่า = ไผ่ + ป่า (คำซ้อน)"
+            }
+        ];
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function startGame() {
+            currentScore = 0;
+            currentQuestion = 0;
+            totalQuestions = 0;
+            correctAnswers = 0;
+            questions = shuffleArray([...questionBank]);
+            
+            document.getElementById('homeScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+            document.getElementById('resultScreen').classList.add('hidden');
+            document.getElementById('tutorialScreen').classList.add('hidden');
+            
+            showQuestion();
+        }
+
+        function showQuestion() {
+            if (currentQuestion >= questions.length) {
+                currentQuestion = 0;
+                questions = shuffleArray([...questionBank]);
+            }
+            
+            timeLeft = 7;
+            updateTimer();
+            startTimer();
+            
+            const question = questions[currentQuestion];
+            const container = document.getElementById('questionContainer');
+            const feedbackContainer = document.getElementById('feedbackContainer');
+            
+            container.innerHTML = '';
+            feedbackContainer.classList.add('hidden');
+            
+            const shuffledOptions = shuffleArray([...question.options]);
+            
+            shuffledOptions.forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'bg-gradient-to-r from-blue-400 to-purple-500 text-white p-6 rounded-xl font-semibold hover:from-blue-500 hover:to-purple-600 transform hover:scale-105 transition-all duration-200 card-hover text-lg';
+                button.textContent = option;
+                button.onclick = () => selectAnswer(option);
+                container.appendChild(button);
+            });
+            
+            updateScore();
+        }
+
+        function selectAnswer(selected) {
+            clearInterval(gameTimer);
+            totalQuestions++;
+            
+            const question = questions[currentQuestion];
+            const buttons = document.querySelectorAll('#questionContainer button');
+            const feedbackContainer = document.getElementById('feedbackContainer');
+            const feedbackText = document.getElementById('feedbackText');
+            const explanationText = document.getElementById('explanationText');
+            
+            buttons.forEach(button => {
+                button.disabled = true;
+                if (button.textContent === question.correct) {
+                    button.className = 'bg-green-500 text-white p-6 rounded-xl font-semibold text-lg pulse';
+                } else if (button.textContent === selected && selected !== question.correct) {
+                    button.className = 'bg-red-500 text-white p-6 rounded-xl font-semibold shake text-lg';
+                } else {
+                    button.className = 'bg-gray-400 text-white p-6 rounded-xl font-semibold text-lg opacity-50';
+                }
+            });
+            
+            // แสดง feedback
+            feedbackContainer.classList.remove('hidden');
+            if (selected === question.correct) {
+                correctAnswers++;
+                currentScore += 100;
+                feedbackContainer.className = 'mt-6 p-4 rounded-xl text-center bg-green-100 border-2 border-green-300';
+                feedbackText.textContent = '🎉 ถูกต้อง! +100 คะแนน';
+                feedbackText.className = 'text-lg font-semibold text-green-800';
+            } else {
+                feedbackContainer.className = 'mt-6 p-4 rounded-xl text-center bg-red-100 border-2 border-red-300';
+                feedbackText.textContent = '❌ ผิด! คำตอบที่ถูกคือ: ' + question.correct;
+                feedbackText.className = 'text-lg font-semibold text-red-800';
+            }
+            
+            explanationText.textContent = question.explanation;
+            explanationText.className = 'text-sm text-gray-600 mt-2';
+            
+            currentQuestion++;
+            
+            if (selected === question.correct && currentScore >= 1000) {
+                setTimeout(() => showResult(true), 2000);
+            } else if (selected !== question.correct) {
+                setTimeout(() => showResult(false), 2000);
+            } else {
+                setTimeout(() => showQuestion(), 2000);
+            }
+        }
+
+        function startTimer() {
+            const bomb = document.getElementById('bomb');
+            const timer = document.getElementById('timer');
+            
+            bomb.classList.remove('explode');
+            
+            gameTimer = setInterval(() => {
+                timeLeft--;
+                updateTimer();
+                
+                if (timeLeft <= 3) {
+                    timer.classList.add('timer-danger');
+                    bomb.classList.add('shake');
+                } else {
+                    timer.classList.remove('timer-danger');
+                    bomb.classList.remove('shake');
+                }
+                
+                if (timeLeft <= 0) {
+                    clearInterval(gameTimer);
+                    bomb.classList.add('explode');
+                    totalQuestions++;
+                    setTimeout(() => showResult(false), 500);
+                }
+            }, 1000);
+        }
+
+        function updateTimer() {
+            document.getElementById('timer').textContent = timeLeft;
+        }
+
+        function updateScore() {
+            document.getElementById('score').textContent = currentScore;
+            const progress = (currentScore / 1000) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function showResult(won) {
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.remove('hidden');
+            
+            const resultIcon = document.getElementById('resultIcon');
+            const resultTitle = document.getElementById('resultTitle');
+            const resultMessage = document.getElementById('resultMessage');
+            const finalScore = document.getElementById('finalScore');
+            const accuracy = document.getElementById('accuracy');
+            
+            const accuracyPercent = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+            
+            finalScore.textContent = `คะแนนรวม: ${currentScore} แต้ม`;
+            accuracy.textContent = `ความแม่นยำ: ${accuracyPercent}% (${correctAnswers}/${totalQuestions})`;
+            
+            if (won) {
+                resultIcon.textContent = '🏆';
+                resultTitle.textContent = 'ยอดเยี่ยม!';
+                resultTitle.className = 'text-4xl font-bold mb-4 text-green-600';
+                resultMessage.textContent = 'คุณทำคะแนนได้ครบ 1000 แต้ม! เป็นผู้เชี่ยวชาญคำซ้อนแล้ว!';
+            } else {
+                resultIcon.textContent = '💥';
+                resultTitle.textContent = 'เกมจบแล้ว!';
+                resultTitle.className = 'text-4xl font-bold mb-4 text-red-600';
+                if (timeLeft <= 0) {
+                    resultMessage.textContent = `ระเบิดระเบิดแล้ว! คุณทำคะแนนได้ ${currentScore} แต้ม`;
+                } else {
+                    resultMessage.textContent = `คุณทำคะแนนได้ ${currentScore} แต้ม ลองใหม่อีกครั้งนะ!`;
+                }
+            }
+        }
+
+        function restartGame() {
+            // รีเซ็ตระเบิดและเริ่มเกมใหม่
+            const bomb = document.getElementById('bomb');
+            const timer = document.getElementById('timer');
+            
+            bomb.classList.remove('explode', 'shake');
+            timer.classList.remove('timer-danger');
+            
+            startGame();
+        }
+
+        function showTutorial() {
+            document.getElementById('resultScreen').classList.add('hidden');
+            document.getElementById('tutorialScreen').classList.remove('hidden');
+        }
+
+        function goHome() {
+            document.getElementById('tutorialScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('homeScreen').classList.remove('hidden');
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9673da4732aad32e',t:'MTc1Mzg2Nzk4Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
+
+
